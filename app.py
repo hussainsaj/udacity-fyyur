@@ -140,12 +140,8 @@ def venues():
     city.venues = Venue.query.filter_by(city_id=city.id).order_by('id').all()
 
     for venue in city.venues:
-      venue.num_upcoming_shows = len(Show.query.filter_by(
-        venue_id=venue.id
-        ### TODO: fix this line
-        #start_time > datetime.now().strftime('%Y-%m-%d%H:%M:%S')
-      ).order_by('id').all())
-
+      venue.num_upcoming_shows = len(Show.query.filter(Show.start_time < date.today()).join('venues').filter_by(id = venue.id).order_by('id').all())
+  
   return render_template('pages/venues.html', areas=cities);
 
 #  Search Venue
@@ -163,8 +159,7 @@ def search_venues():
   response['data'] = []
 
   for venue in venues:
-    # TODO add date filter
-    upcomingShows = len(Show.query.filter_by(venue_id=venue.id).all())
+    upcomingShows = len(Show.query.filter(Show.start_time < date.today()).join('venues').filter_by(id = venue.id).all())
 
     response['data'].append({
       "id": venue.id,
@@ -193,11 +188,7 @@ def show_venue(venue_id):
   for genre in genres:
     venue.genres.append(Genre.query.filter_by(id = genre.genre_id).first().name)
   
-  shows = Show.query.join('venues').filter_by(id = venue_id)
-
-  # TODO: fix this
-  pastShows = shows.filter_by(start_time < date.today).all()
-  #pastShows = shows.all()
+  pastShows = Show.query.filter(Show.start_time < date.today()).join('venues').filter_by(id = venue_id).all()
 
   venue.past_shows_count = len(pastShows)
 
@@ -209,12 +200,10 @@ def show_venue(venue_id):
         "artist_id": show.artists.id,
         "artist_name": show.artists.name,
         "artist_image_link": show.artists.image_link,
-        "start_time": '2019-06-15T23:00:00.000Z'# TODO show.start_time
+        "start_time": show.start_time.strftime('%Y-%m-%dT%H:%M:%SZ')
       })
 
-  # TODO: fix this
-  #upcomingShows = shows.filter_by(start_time > date.today).all()
-  upcomingShows = shows.all()
+  upcomingShows = Show.query.filter(Show.start_time > date.today()).join('venues').filter_by(id = venue_id).all()
 
   venue.upcoming_shows_count = len(upcomingShows)
 
@@ -226,7 +215,7 @@ def show_venue(venue_id):
         "artist_id": show.artists.id,
         "artist_name": show.artists.name,
         "artist_image_link": show.artists.image_link,
-        "start_time": '2019-06-15T23:00:00.000Z'# TODO show.start_time
+        "start_time": show.start_time.strftime('%Y-%m-%dT%H:%M:%SZ')
       })
 
 
@@ -483,8 +472,7 @@ def search_artists():
   response['data'] = []
 
   for artist in artists:
-    # TODO add date filter
-    upcomingShows = len(Show.query.filter_by(artist_id=artist.id).all())
+    upcomingShows = len(Show.query.filter(Show.start_time < date.today()).join('artists').filter_by(id = artist.id).all())
 
     response['data'].append({
       "id": artist.id,
@@ -513,11 +501,7 @@ def show_artist(artist_id):
   for genre in genres:
     artist.genres.append(Genre.query.filter_by(id = genre.genre_id).first().name)
   
-  shows = Show.query.join('artists').filter_by(id = artist_id)
-  
-  # TODO: fix this
-  #pastShows = shows.filter_by(start_time < date.today).all()
-  pastShows = shows.all()
+  pastShows = Show.query.filter(Show.start_time < date.today()).join('artists').filter_by(id = artist_id).all()
 
   artist.past_shows_count = len(pastShows)
 
@@ -529,12 +513,10 @@ def show_artist(artist_id):
         "venue_id": show.venues.id,
         "venue_name": show.venues.name,
         "venue_image_link": show.venues.image_link,
-        "start_time": '2019-06-15T23:00:00.000Z'# TODO show.start_time
+        "start_time": show.start_time.strftime('%Y-%m-%dT%H:%M:%SZ')
       })
   
-  # TODO: fix this
-  #upcomingShows = shows.filter_by(start_time > date.today).all()
-  upcomingShows = shows.all()
+  upcomingShows = Show.query.filter(Show.start_time > date.today()).join('artists').filter_by(id = artist_id).all()
 
   artist.upcoming_shows_count = len(upcomingShows)
 
@@ -546,7 +528,7 @@ def show_artist(artist_id):
         "venue_id": show.venues.id,
         "venue_name": show.venues.name,
         "venue_image_link": show.venues.image_link,
-        "start_time": '2019-06-15T23:00:00.000Z'# TODO show.start_time
+        "start_time": show.start_time.strftime('%Y-%m-%dT%H:%M:%SZ')
       })
 
   return render_template('pages/show_artist.html', artist=artist)
